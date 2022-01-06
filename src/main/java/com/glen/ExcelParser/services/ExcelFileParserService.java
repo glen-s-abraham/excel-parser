@@ -10,9 +10,14 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.glen.ExcelParser.pojo.SimpleInsertQuery;
+
 import org.apache.poi.openxml4j.opc.OPCPackage;
 
-
+/*TODO
+ * Need logic for selective column trimming
+ */
 
 public class ExcelFileParserService {
 
@@ -31,11 +36,15 @@ public class ExcelFileParserService {
 			
 			List<Row> sheetRows = getRowListFromSheet(sheet);
 			List<Row> trimmedRows = removeEmptyRows(sheetRows);
-			List<String> cellValues = getCellValuesFromRow(trimmedRows.get(0));
-			System.out.println(cellValues);
-			cellValues = getCellValuesFromRow(trimmedRows.get(1));
-			System.out.println(cellValues);
-
+			List<String> columnHeaders = getCellValuesFromRow(trimmedRows.get(0));
+			
+			SimpleInsertQuery defaultQuery = new SimpleInsertQuery.Builder("fir_table", columnHeaders).build();
+			SimpleInsertQuery queryWithValue = new SimpleInsertQuery.Builder("fir_table", columnHeaders)
+					.setValues(getCellValuesFromRow(trimmedRows.get(1))).build();
+			
+			System.out.println(defaultQuery.getSqlQuery());
+			System.out.println(queryWithValue.getSqlQuery());
+			
 			
 		}catch (Exception e) {
 			e.printStackTrace();
