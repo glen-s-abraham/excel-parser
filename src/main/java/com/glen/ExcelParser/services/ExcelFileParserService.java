@@ -3,6 +3,7 @@ package com.glen.ExcelParser.services;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -14,15 +15,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.glen.ExcelParser.pojo.SimpleInsertQuery;
 
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 
-/*TODO
- * Need logic for selective column trimming
- */
-
-public class ExcelFileParserService {
+public class ExcelFileParserService implements FileToDatabaseLoaderService{
 	
-	private String[] COLS_TO_INCLUDE= {
+	private String[] COLS_TO_INCLUDE_FROM_FIR= {
 			"FIR Pit Reference Number",
 			"latitude",
 			"longitude",
@@ -35,32 +33,29 @@ public class ExcelFileParserService {
 			"MPS_ID"
 	};
 	
-	public void loadExcelFiles(String path) {
-		//Generate file stream with path
-		//POIFSFileSystem file = new POIFSFileSystem(new File(path));
-		
-		
+	public int[] SHEET_INDEXES_TO_USE= {2,3,4};
+	public HashMap<Integer, String> SHEET_TO_TABLE = 
+		new HashMap<Integer,String>(){{
+		put(2, "fir_pits");
+		put(3, "fir_duct");
+		put(4, "fir_lics");
+	}};
+	
+	@Override
+	public void loadFilesToDB(String path) {
 		OPCPackage pkg;
 		XSSFWorkbook workbook;
 		XSSFSheet sheet;
 		try {
 			pkg = OPCPackage.open(new File(path));
-			workbook  = new XSSFWorkbook(pkg);
-			sheet =  workbook.getSheetAt(4);
-		
-			//iterateThroughSheet(sheet);
-			
-			List<Row> sheetRows = getRowListFromSheet(sheet);
-			List<Row> trimmedRows = removeEmptyRows(sheetRows);
-			List<Integer> colIndexesToInclude = getColumnIndecesToInclude(trimmedRows);
-			trimmedRows = dropColumnsExcept(trimmedRows, colIndexesToInclude);
-			List<String> columnHeaders = getCellValuesFromRow(trimmedRows.get(0));
-			System.out.println(columnHeaders);
-			SimpleInsertQuery defaultQuery = new SimpleInsertQuery.Builder("fir_table", columnHeaders).build();
-			SimpleInsertQuery queryWithValue = new SimpleInsertQuery.Builder("fir_table", columnHeaders)
-					.setValues(getCellValuesFromRow(trimmedRows.get(2))).build();
-			System.out.println(defaultQuery.getSqlQuery());
-			System.out.println(queryWithValue.getSqlQuery());
+			//generate queries for each sheet
+			for(int i=0;i<SHEET_INDEXES_TO_USE.length;i++) {
+				workbook  = new XSSFWorkbook(pkg);
+				sheet =  workbook.getSheetAt(SHEET_INDEXES_TO_USE[i]);
+				String tableName = SHEET_TO_TABLE.get(SHEET_INDEXES_TO_USE[i]);
+				List<String> queryList=processSheetAndGenerateQuery(sheet,tableName);
+				System.out.println(queryList.get(100));
+			}
 			
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -69,31 +64,42 @@ public class ExcelFileParserService {
 		
 	}
 	
-	private List<Row> dropColumnsExcept(List<Row> sheetRows,List<Integer> indecesToInclude) {
-		List<Row> rowList = sheetRows;
-		int totColumns = rowList.get(0).getPhysicalNumberOfCells();
-		for(int i=0;i<totColumns;i++) {
-			if(indecesToInclude.contains(i))
-				continue;
-			for(Row row:rowList) {
-				if(row.getCell(i)!=null)
-					row.removeCell(row.getCell(i));
-			}
-			
+	private List<String> processSheetAndGenerateQuery(XSSFSheet sheet, String tableName) {
+		List<Row> sheetRows = getRowListFromSheet(sheet);
+		List<Row> trimmedRows = removeEmptyRows(sheetRows);
+		List<Integer> colIndexesToExclude = getColumnIndecesToExclude(trimmedRows.get(0));
+		trimmedRows = dropColumnsWithIndexes(trimmedRows, colIndexesToExclude);
+		List<String> columnHeaders = getCellValuesFromRow(trimmedRows.get(0));
+		if(columnHeaders!=null && trimmedRows!=null && trimmedRows.size()>1)
+		{			
+			List<String> insertQueries=new ArrayList<>();
+			for(int i=1;i<trimmedRows.size();i++)
+				 insertQueries.add(new SimpleInsertQuery.Builder(tableName, columnHeaders)
+				.setValues(getCellValuesFromRow(trimmedRows.get(i))).build().getSqlQuery());
+			System.out.println("generated "+insertQueries.size()+" queries for "+tableName);
+			return insertQueries;
 		}
+		return null;
+	}
+
+	private List<Row> dropColumnsWithIndexes(List<Row> sheetRows,List<Integer> indecesToRemove) {
+		List<Row> rowList = sheetRows;
+		for(Row row:rowList) 
+			for(int index:indecesToRemove) 
+				if(row.getCell(index)!=null)
+					row.removeCell(row.getCell(index));
+	
 		return rowList.size()==0?null:rowList;
 	}
 
-	//Need refactoring
-	private List<Integer> getColumnIndecesToInclude(List<Row> sheetRows) {
+
+	private List<Integer> getColumnIndecesToExclude(Row colHeaders) {
 		List<Integer> requiredIndeces = new ArrayList<>();
-		for(Row row:sheetRows) {	
-			List<String> cellValues = getCellValuesFromRow(row);
-			for(int i=0;i<cellValues.size();i++) {
-				if(Arrays.asList(COLS_TO_INCLUDE).contains(cellValues.get(i))) 
-					requiredIndeces.add(i);		
-			}		
-		}
+		List<String> cellValues = getCellValuesFromRow(colHeaders);
+		for(int i=0;i<cellValues.size();i++) {
+			if(!Arrays.asList(COLS_TO_INCLUDE_FROM_FIR).contains(cellValues.get(i))) 
+				requiredIndeces.add(i);		
+		}		
 		return requiredIndeces.size()==0?null:requiredIndeces;
 	}
 
