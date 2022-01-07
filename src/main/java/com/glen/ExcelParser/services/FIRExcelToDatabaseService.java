@@ -78,16 +78,16 @@ public class FIRExcelToDatabaseService implements FileToDatabaseLoaderService{
 
 	private List<String> processSheetAndGenerateQuery(XSSFSheet sheet,String[] columnsToInclude, String tableName) {
 		List<Row> sheetRows = getRowListFromSheet(sheet);
-		List<Row> trimmedRows = removeEmptyRows(sheetRows);
-		List<Integer> colIndexesToExclude = getColumnIndecesToExclude(trimmedRows.get(0),columnsToInclude);
-		trimmedRows = dropColumnsWithIndexes(trimmedRows, colIndexesToExclude);
-		List<String> columnHeaders = getCellValuesFromRow(trimmedRows.get(0));
-		if(columnHeaders!=null && trimmedRows!=null && trimmedRows.size()>1)
+		sheetRows = removeEmptyRows(sheetRows);
+		List<Integer> colIndexesToExclude = getColumnIndecesToExclude(sheetRows.get(0),columnsToInclude);
+		sheetRows = dropColumnsWithIndexes(sheetRows, colIndexesToExclude);
+		List<String> columnHeaders = getCellValuesFromRow(sheetRows.get(0));
+		if(columnHeaders!=null && sheetRows!=null && sheetRows.size()>1)
 		{			
 			List<String> insertQueries=new ArrayList<>();
-			for(int i=1;i<trimmedRows.size();i++)
+			for(int i=1;i<sheetRows.size();i++)
 				 insertQueries.add(new SimpleInsertQuery.Builder(tableName, columnHeaders)
-				.setValues(getCellValuesFromRow(trimmedRows.get(i))).build().getSqlQuery());
+				.setValues(getCellValuesFromRow(sheetRows.get(i))).build().getSqlQuery());
 			System.out.println("generated "+insertQueries.size()+" queries for "+tableName);
 			return insertQueries;
 		}
