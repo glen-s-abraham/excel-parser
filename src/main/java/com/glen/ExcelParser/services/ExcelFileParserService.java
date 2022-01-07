@@ -20,20 +20,28 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 
 public class ExcelFileParserService implements FileToDatabaseLoaderService{
 	
-	private String[] COLS_TO_INCLUDE_FROM_FIR= {
+	public int[] SHEET_INDEXES_TO_USE= {2,3,4};
+	
+	public HashMap<Integer, String[]> COLS_TO_INCLUDE_FROM_SHEETS =
+	new HashMap<Integer,String[]>(){{
+		put(2, new String[] {
 			"FIR Pit Reference Number",
 			"latitude",
 			"longitude",
-			"nbn_system_identifier",
+			"nbn_system_identifier"	
+		});
+		put(3,new String[] {
 			"FIR Duct Reference Number",
 			"material",
 			"ownership",
-			"LIC Reference Number",
-			"Ref_ID",
-			"MPS_ID"
-	};
+		});
+		put(4,new String[] {
+				"LIC Reference Number",
+				"Ref_ID",
+				"MPS_ID"	
+		});	
+	}};
 	
-	public int[] SHEET_INDEXES_TO_USE= {2,3,4};
 	public HashMap<Integer, String> SHEET_TO_TABLE = 
 		new HashMap<Integer,String>(){{
 		put(2, "fir_pits");
@@ -48,26 +56,30 @@ public class ExcelFileParserService implements FileToDatabaseLoaderService{
 		XSSFSheet sheet;
 		try {
 			pkg = OPCPackage.open(new File(path));
-			//generate queries for each sheet
-			for(int i=0;i<SHEET_INDEXES_TO_USE.length;i++) {
-				workbook  = new XSSFWorkbook(pkg);
+			workbook  = new XSSFWorkbook(pkg);
+			for(int i=0;i<SHEET_INDEXES_TO_USE.length;i++) {			
 				sheet =  workbook.getSheetAt(SHEET_INDEXES_TO_USE[i]);
+				String[] columnsToInclude = COLS_TO_INCLUDE_FROM_SHEETS.get(SHEET_INDEXES_TO_USE[i]);
 				String tableName = SHEET_TO_TABLE.get(SHEET_INDEXES_TO_USE[i]);
-				List<String> queryList=processSheetAndGenerateQuery(sheet,tableName);
-				System.out.println(queryList.get(100));
+				List<String> queryList=processSheetAndGenerateQuery(sheet,columnsToInclude,tableName);
+				if(queryList!=null)
+					executeQueries(queryList);
 			}
 			
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
-			
-		
 	}
 	
-	private List<String> processSheetAndGenerateQuery(XSSFSheet sheet, String tableName) {
+	private void executeQueries(List<String> queryList) {
+		//TODO implement jdbc query insertion logic
+		System.out.println(queryList.get(0));
+	}
+
+	private List<String> processSheetAndGenerateQuery(XSSFSheet sheet,String[] columnsToInclude, String tableName) {
 		List<Row> sheetRows = getRowListFromSheet(sheet);
 		List<Row> trimmedRows = removeEmptyRows(sheetRows);
-		List<Integer> colIndexesToExclude = getColumnIndecesToExclude(trimmedRows.get(0));
+		List<Integer> colIndexesToExclude = getColumnIndecesToExclude(trimmedRows.get(0),columnsToInclude);
 		trimmedRows = dropColumnsWithIndexes(trimmedRows, colIndexesToExclude);
 		List<String> columnHeaders = getCellValuesFromRow(trimmedRows.get(0));
 		if(columnHeaders!=null && trimmedRows!=null && trimmedRows.size()>1)
@@ -93,30 +105,26 @@ public class ExcelFileParserService implements FileToDatabaseLoaderService{
 	}
 
 
-	private List<Integer> getColumnIndecesToExclude(Row colHeaders) {
+	private List<Integer> getColumnIndecesToExclude(Row colHeaders,String[] columnsToInclude) {
 		List<Integer> requiredIndeces = new ArrayList<>();
 		List<String> cellValues = getCellValuesFromRow(colHeaders);
 		for(int i=0;i<cellValues.size();i++) {
-			if(!Arrays.asList(COLS_TO_INCLUDE_FROM_FIR).contains(cellValues.get(i))) 
+			if(!Arrays.asList(columnsToInclude).contains(cellValues.get(i))) 
 				requiredIndeces.add(i);		
 		}		
 		return requiredIndeces.size()==0?null:requiredIndeces;
 	}
 
-	//preprocessing step 1 remove empty rows
+	
 	private List<Row> removeEmptyRows(List<Row> sheetRows) {
 		List<Row> rowList = new ArrayList<Row>();
-		for(Row row:sheetRows) {
-			//seperate as a validator
-			if(isSpecifiedCellRangeNull(getCellValuesFromRow(row),0,5)){
-				continue;
-			}
-			rowList.add(row);
-		}
+		for(Row row:sheetRows) 
+			if(!isSpecifiedCellRangeNull(getCellValuesFromRow(row),0,5))	
+				rowList.add(row);
+		
 		return rowList.size()==0?null:rowList;
 	}
 	
-	//Validator for preprocessing
 	private boolean isSpecifiedCellRangeNull(List<String> cellValuesFromRow, int startIndex, int stopIndex) {
 		for(int i=startIndex;i<=stopIndex;i++) 
 			if(cellValuesFromRow.get(i)!=null)
@@ -152,37 +160,10 @@ public class ExcelFileParserService implements FileToDatabaseLoaderService{
 	private List<Row> getRowListFromSheet(XSSFSheet sheet) {
 		List <Row> rowList = new ArrayList<Row>();
 		Iterator<Row> rwIterator = sheet.iterator();
-		while(rwIterator.hasNext()) {
+		while(rwIterator.hasNext()) 
 			rowList.add(rwIterator.next());
-		}
+		
 		return rowList.size()==0?null:rowList;
 	}
 	
-	
-
-	private void iterateThroughSheet(XSSFSheet sheet) {
-		Iterator<Row> iterator = sheet.iterator();
-		while(iterator.hasNext()) {
-			Row nextRow = iterator.next();
-			Iterator<Cell> cells = nextRow.cellIterator();
-			while(cells.hasNext()) {
-				Cell cell = cells.next();
-				 switch (cell.getCellType()) {
-	                 case STRING:
-	                     System.out.print(cell.getStringCellValue());
-	                     break;
-	                 case BOOLEAN:
-	                     System.out.print(cell.getBooleanCellValue());
-	                     break;
-	                 case NUMERIC:
-	                     System.out.print(cell.getNumericCellValue());
-	                     break;
-				default:
-					break;
-             }
-			System.out.print(" - ");	 
-			}
-			System.out.println();
-		}
-	}
 }
