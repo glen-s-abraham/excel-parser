@@ -2,33 +2,58 @@ package com.glen.ExcelParser.services;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.glen.ExcelParser.utils.ExcelFileParser;
+/*
+ * Currently Implemented validations
+ * - Check for total number of sheets
+ * - Checks the Names and Order of sheets.
+ * - Check for word slug's presence in Coverpage 
+ */
 
 public class FIRExcelValidationService {
 	
 	private int REQUIRED_NO_OF_SHEETS = 8;
+	private int CELL_NULL_RANGE_START_INDEX = 0;
+	private int CELL_NULL_RANGE_STOP_INDEX = 1;
 	private HashMap<Integer, String> SHEET_INDEX_TO_NAMES_REQUIRED = 
 			new HashMap<Integer,String>(){{
-				put(0,"coverpage");
-				put(1,"documentcontrol");
-				put(2,"pits");
-				put(3,"ducts");
-				put(4,"lics");
-				put(5,"listvalues");
-				put(6,"definitions");
-				put(7,"systemimpacts");
+				put(0,"Cover Page");
+				put(1,"Document Control");
+				put(2,"Pits");
+				put(3,"Ducts");
+				put(4,"LICs");
+				put(5,"ListValues");
+				put(6,"Definitions");
+				put(7,"System Impacts");
 			}};
+			
+	private String[] COVER_SHEET_SLUGS= {
+			"nbn-confidential-commercial",
+			"fieldinspectionreport(n2p)",
+			"documentnumber",
+			"documentcategory",
+			"author",
+			"approver(owner)",
+			"status",
+			"issuedate",
+			"revisionnumber",
+			"start-date",
+			"end-date"
+	};
 	
 	
-	
-	private String ERR_MSG_FILE_SIZE_BELOW_ZERO="File is is below zero kb";
-	private String ERR_MSG_FILE_SHEETS_LESS_THAN_REQUIRED ="File doesn't have the required number of sheets";
-	private String ERR_MSG_SHEET_INDEX_DOESNT_MATCH_TITLE_ORDER="The Sheet doesn't match the required order:";
-	
+	private String ERR_MSG_FILE_SHEETS_LESS_THAN_REQUIRED ="ERROR!File doesn't have the required number of sheets";
+	private String ERR_MSG_SHEET_INDEX_DOESNT_MATCH_TITLE_ORDER="ERROR!The Sheet doesn't match the required order:";
+	private String ERR_MSG_MISSING_FIELDS = "WARNING!Cover Page is missing field:";
 	private List<String> validation_errors = new ArrayList<>();
 	public List<String> validate(String path){
 		try {
@@ -41,6 +66,8 @@ public class FIRExcelValidationService {
 			//Does Index and Sheet names are in order
 			validateIfIndexAndSheetNamesAreInRequiredOrder(workbook,SHEET_INDEX_TO_NAMES_REQUIRED);
 			
+			validateIfCoverPageContainsSpecifiedSlugs(workbook.getSheetAt(1),COVER_SHEET_SLUGS);
+			
 			
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -48,18 +75,36 @@ public class FIRExcelValidationService {
 		return validation_errors;
 	}
 	
+	private void validateIfCoverPageContainsSpecifiedSlugs(XSSFSheet sheet, String[] coverShetSlugs) {
+		List<Row> rows = ExcelFileParser.getRowListFromSheet(sheet);
+		rows = ExcelFileParser.removeEmptyRows(rows,CELL_NULL_RANGE_START_INDEX,CELL_NULL_RANGE_STOP_INDEX);
+		List<String> valueToBeChecked = new ArrayList<>();
+		
+		for(Row row:rows) {
+			List<String> cellValues = ExcelFileParser.getCellValuesFromRow(row);
+			int  firstNonEmptyCell = ExcelFileParser.getFirstNonEmptyCell(cellValues);
+			valueToBeChecked.add(parseToLowerandRemoveSpace(cellValues.get(firstNonEmptyCell)));
+		}
+		for(String slug:coverShetSlugs)
+			if(!valueToBeChecked.contains(slug))
+				validation_errors.add(ERR_MSG_MISSING_FIELDS+slug);
+	}
+
 	private void validateIfIndexAndSheetNamesAreInRequiredOrder(XSSFWorkbook workbook,
 			HashMap<Integer, String>sheetIndexToNames) {
 		for(int i=0;i<workbook.getNumberOfSheets();i++) {
-			String nameFromSheet = workbook.getSheetName(i).toLowerCase().replaceAll(" ","");
-			if(!nameFromSheet.equals(SHEET_INDEX_TO_NAMES_REQUIRED.get(i)))
+			String nameFromSheet = workbook.getSheetName(i);
+			String userSpecifiedName = SHEET_INDEX_TO_NAMES_REQUIRED.get(i);
+			if(!parseToLowerandRemoveSpace(nameFromSheet).equals(parseToLowerandRemoveSpace(userSpecifiedName)))
 					validation_errors.add(ERR_MSG_SHEET_INDEX_DOESNT_MATCH_TITLE_ORDER
-							+ " expected "+SHEET_INDEX_TO_NAMES_REQUIRED.get(i) + " as sheet " + (i+1)
+							+ " expected "+userSpecifiedName + " as sheet " + (i+1)
 							+" but recieved "+nameFromSheet+" as sheet "+(i+1)  
 					);
-		}
-			
-		
+		}	
+	}
+
+	private String parseToLowerandRemoveSpace(String str) {
+		return str.toLowerCase().replaceAll(" ","");
 	}
 
 	private void validateFileForRequiredNumberOfSheets(XSSFWorkbook workbook, int requiredSheets) {

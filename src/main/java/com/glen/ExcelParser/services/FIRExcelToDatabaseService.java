@@ -21,7 +21,9 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 
 public class FIRExcelToDatabaseService implements FileToDatabaseLoaderService{
 	
-	public int[] SHEET_INDEXES_TO_USE= {2,3,4};
+	private int[] SHEET_INDEXES_TO_USE= {2,3,4};
+	private int CELL_NULL_RANGE_START_INDEX = 0;
+	private int CELL_NULL_RANGE_STOP_INDEX = 5;
 	
 	public HashMap<Integer, String[]> COLS_TO_INCLUDE_FROM_SHEETS =
 	new HashMap<Integer,String[]>(){{
@@ -79,7 +81,7 @@ public class FIRExcelToDatabaseService implements FileToDatabaseLoaderService{
 
 	private List<String> processSheetAndGenerateQuery(XSSFSheet sheet,String[] columnsToInclude, String tableName) {
 		List<Row> sheetRows = ExcelFileParser.getRowListFromSheet(sheet);
-		sheetRows = ExcelFileParser.removeEmptyRows(sheetRows);
+		sheetRows = ExcelFileParser.removeEmptyRows(sheetRows,CELL_NULL_RANGE_START_INDEX,CELL_NULL_RANGE_STOP_INDEX);
 		List<Integer> colIndexesToExclude = ExcelFileParser.getColumnIndecesToExclude(sheetRows.get(0),columnsToInclude);
 		sheetRows = ExcelFileParser.dropColumnsWithIndexes(sheetRows, colIndexesToExclude);
 		List<String> columnHeaders = ExcelFileParser.getCellValuesFromRow(sheetRows.get(0));

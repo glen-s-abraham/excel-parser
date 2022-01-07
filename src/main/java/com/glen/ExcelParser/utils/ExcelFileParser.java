@@ -32,21 +32,21 @@ public class ExcelFileParser {
 	}
 
 	
-	public static List<Row> removeEmptyRows(List<Row> sheetRows) {
+	public static List<Row> removeEmptyRows(List<Row> sheetRows,int startCell,int stopCell) {
 		List<Row> rowList = new ArrayList<Row>();
+		
 		for(Row row:sheetRows) 
-			if(!isSpecifiedCellRangeNull(getCellValuesFromRow(row),0,5))	
+			if(!isSpecifiedCellRangeNull(getCellValuesFromRow(row),startCell,stopCell))	
 				rowList.add(row);
 		
 		return rowList.size()==0?null:rowList;
 	}
 	
 	public static boolean isSpecifiedCellRangeNull(List<String> cellValuesFromRow, int startIndex, int stopIndex) {
-		for(int i=startIndex;i<=stopIndex;i++) 
-			if(cellValuesFromRow.get(i)!=null)
-				return false;
-		
-		return true; 
+			for(int i=startIndex;i<=stopIndex;i++) 
+				if(cellValuesFromRow.get(i)!=null)
+					return false;
+			return true;	 
 	}
 	
 	public static List<String> getCellValuesFromRow(Row row) {
@@ -80,5 +80,14 @@ public class ExcelFileParser {
 			rowList.add(rwIterator.next());
 		
 		return rowList.size()==0?null:rowList;
-	}	
+	}
+	
+	public static int getFirstNonEmptyCell(List<String> cellValues) {
+		for(int firstNonEmptyCell=0;firstNonEmptyCell<cellValues.size();firstNonEmptyCell++)
+			if(cellValues.get(firstNonEmptyCell)!=null) {
+				return firstNonEmptyCell;
+			}
+				
+		return -1;
+	}
 }
