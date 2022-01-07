@@ -2,7 +2,7 @@ package com.glen.ExcelParser;
 
 
 
-import com.glen.ExcelParser.services.ExcelFileParserService;
+import com.glen.ExcelParser.services.FIRExcelToDatabaseService;
 import com.glen.ExcelParser.services.FileToDatabaseLoaderService;
 import com.glen.ExcelParser.utils.FileUnzipper;
 
@@ -13,7 +13,7 @@ import com.glen.ExcelParser.utils.FileUnzipper;
 public class App 
 {
 	
-	private static FileToDatabaseLoaderService excelParser=new ExcelFileParserService();
+	private static FileToDatabaseLoaderService excelParser=new FIRExcelToDatabaseService();
 	
     public static void main( String[] args )
     {

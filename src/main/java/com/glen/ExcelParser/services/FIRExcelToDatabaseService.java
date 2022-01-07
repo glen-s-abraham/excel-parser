@@ -18,7 +18,7 @@ import com.glen.ExcelParser.pojo.SimpleInsertQuery;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 
-public class ExcelFileParserService implements FileToDatabaseLoaderService{
+public class FIRExcelToDatabaseService implements FileToDatabaseLoaderService{
 	
 	public int[] SHEET_INDEXES_TO_USE= {2,3,4};
 	
