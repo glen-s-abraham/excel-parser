@@ -9,7 +9,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 
-public class ExcelFileParser {
+public class FIRExcelUtils {
 	public static List<Row> dropColumnsWithIndexes(List<Row> sheetRows,List<Integer> indecesToRemove) {
 		List<Row> rowList = sheetRows;
 		for(Row row:rowList) 

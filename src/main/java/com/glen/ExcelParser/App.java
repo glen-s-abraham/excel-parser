@@ -2,6 +2,7 @@ package com.glen.ExcelParser;
 
 
 
+import com.glen.ExcelParser.pojo.ValidationReport;
 import com.glen.ExcelParser.services.FIRExcelToDatabaseService;
 import com.glen.ExcelParser.services.FIRExcelValidationService;
 import com.glen.ExcelParser.services.FileToDatabaseLoaderService;
@@ -21,13 +22,13 @@ public class App
     {
     	 String path = "C:/Users/Glen/Downloads/sampledatainsurance/sampledatainsurance.xlsx";
     	 //path="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
-    	 for(String error:excelValidation.validate(path))
-    		 System.out.println(error);
-    	
-	     path="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
-	     excelParser.loadFilesToDB(path);
-	    	
-	    String mapInfoPath="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/5GUG-20_IDD_S18_1.1.zip";
-	    System.out.println(FileUnzipper.unzip(mapInfoPath));
+    	 for(ValidationReport error:excelValidation.validate(path))
+    		 System.out.println(error.getType()+" "+error.getMessage());
+//    	
+//	     path="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
+//	     excelParser.loadFilesToDB(path);
+//	    	
+//	    String mapInfoPath="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/5GUG-20_IDD_S18_1.1.zip";
+//	    System.out.println(FileUnzipper.unzip(mapInfoPath));
    }
 }
