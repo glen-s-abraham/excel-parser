@@ -90,7 +90,8 @@ public class FIRExcelValidationService {
 		for(Row row:rows) {
 			List<String> cellValues = FIRExcelUtils.getCellValuesFromRow(row);
 			int  firstNonEmptyCell = FIRExcelUtils.getFirstNonEmptyCell(cellValues);
-			valueToBeChecked.add(parseToLowerandRemoveSpace(cellValues.get(firstNonEmptyCell)));
+			if(firstNonEmptyCell!=-1)
+				valueToBeChecked.add(parseToLowerandRemoveSpace(cellValues.get(firstNonEmptyCell)));
 		}
 		for(String slug:coverShetSlugs)
 			if(!valueToBeChecked.contains(slug))
