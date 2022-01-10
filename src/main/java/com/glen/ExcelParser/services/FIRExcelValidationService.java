@@ -22,10 +22,11 @@ import com.glen.ExcelParser.utils.FIRExcelUtils;
  * - Check for slug's presence in Coverpage 
  */
 
-public class FIRExcelValidationService{
+public class FIRExcelValidationService implements FileValidationService{
 	
 	private List<ValidationReport> validationErrors = new ArrayList<>();
 	
+	@Override
 	public List<ValidationReport> validate(String path){
 		try {
 			OPCPackage pkg = OPCPackage.open(new File(path));
@@ -44,6 +45,8 @@ public class FIRExcelValidationService{
 					workbook.getSheet(FIRValidationConstants.SHEET_INDEX_TO_NAMES_REQUIRED.get(0)),
 					FIRValidationConstants.COVER_SHEET_SLUGS
 			);
+			
+			pkg.close();
 			
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -76,10 +79,10 @@ public class FIRExcelValidationService{
 	}
 
 	private void validateIfIndexAndSheetNamesAreInRequiredOrder(XSSFWorkbook workbook,
-			Map<Integer, String> sHEET_INDEX_TO_NAMES_REQUIRED2) {
+			Map<Integer, String> sheetIndexToNames) {
 		for(int i=0;i<workbook.getNumberOfSheets();i++) {
 			String nameFromSheet = workbook.getSheetName(i);
-			String userSpecifiedName = FIRValidationConstants.SHEET_INDEX_TO_NAMES_REQUIRED.get(i);
+			String userSpecifiedName =sheetIndexToNames.get(i);
 			if(!parseToLowerandRemoveSpace(nameFromSheet).equals(parseToLowerandRemoveSpace(userSpecifiedName)))
 					validationErrors.add(
 							new ValidationReport(
