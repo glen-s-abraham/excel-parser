@@ -19,6 +19,14 @@ public class FileUnzipper {
 			String dirName = zipFile.getFile().getName()
 					.replace(FILE_EXTENSION,"");
 			String destinationPath =DESTINATION_BASE_PATH+dirName;
+	
+//			List<String>fileExtensions = zipFile.getFileHeaders().stream()
+//					.map(file->file.getFileName().substring(file.getFileName().lastIndexOf('.') + 1))
+//					.collect(Collectors.toList());
+//			
+//			System.err.println(fileExtensions.contains("DAT") && fileExtensions.contains("TOB"));
+			
+			
 			zipFile.extractAll(destinationPath);
 					
 			return new UnzippedFileInfo

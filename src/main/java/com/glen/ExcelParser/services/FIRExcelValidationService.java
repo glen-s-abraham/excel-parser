@@ -18,7 +18,7 @@ import com.glen.ExcelParser.utils.FIRExcelUtils;
  * Currently Implemented validations
  * - Check for total number of sheets
  * - Checks the Names and Order of sheets.
- * - Check for word slug's presence in Coverpage 
+ * - Check for slug's presence in Coverpage 
  */
 
 public class FIRExcelValidationService {
@@ -26,6 +26,7 @@ public class FIRExcelValidationService {
 	private final int REQUIRED_NO_OF_SHEETS = 8;
 	private final int CELL_NULL_RANGE_START_INDEX = 0;
 	private final int CELL_NULL_RANGE_STOP_INDEX = 1;
+	@SuppressWarnings("serial")
 	private final Map<Integer, String> SHEET_INDEX_TO_NAMES_REQUIRED = 
 			new HashMap<Integer,String>(){{
 				put(0,"Cover Page");
@@ -59,7 +60,7 @@ public class FIRExcelValidationService {
 	private final String ERR_MSG_SHEET_INDEX_DOESNT_MATCH_TITLE_ORDER="The Sheet doesn't match the required order:";
 	private final String ERR_MSG_MISSING_FIELDS = "Cover Page is missing field:";
 	
-	private List<ValidationReport> validation_errors = new ArrayList<>();
+	private List<ValidationReport> validationErrors = new ArrayList<>();
 	
 	public List<ValidationReport> validate(String path){
 		try {
@@ -72,13 +73,13 @@ public class FIRExcelValidationService {
 			//Does Index and Sheet names are in order
 			validateIfIndexAndSheetNamesAreInRequiredOrder(workbook,SHEET_INDEX_TO_NAMES_REQUIRED);
 			
-			validateIfCoverPageContainsSpecifiedSlugs(workbook.getSheetAt(1),COVER_SHEET_SLUGS);
+			validateIfCoverPageContainsSpecifiedSlugs(workbook.getSheet(SHEET_INDEX_TO_NAMES_REQUIRED.get(0)),COVER_SHEET_SLUGS);
 			
 			
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
-		return validation_errors;
+		return validationErrors;
 	}
 	
 	private void validateIfCoverPageContainsSpecifiedSlugs(XSSFSheet sheet, String[] coverShetSlugs) {
@@ -93,7 +94,7 @@ public class FIRExcelValidationService {
 		}
 		for(String slug:coverShetSlugs)
 			if(!valueToBeChecked.contains(slug))
-				validation_errors.add(
+				validationErrors.add(
 						new ValidationReport(VALIDATION_TYPE_WARNING,ERR_MSG_MISSING_FIELDS+slug)
 				);
 	}
@@ -104,7 +105,7 @@ public class FIRExcelValidationService {
 			String nameFromSheet = workbook.getSheetName(i);
 			String userSpecifiedName = SHEET_INDEX_TO_NAMES_REQUIRED.get(i);
 			if(!parseToLowerandRemoveSpace(nameFromSheet).equals(parseToLowerandRemoveSpace(userSpecifiedName)))
-					validation_errors.add(
+					validationErrors.add(
 							new ValidationReport(
 									VALIDATION_TYPE_ERROR,ERR_MSG_SHEET_INDEX_DOESNT_MATCH_TITLE_ORDER
 									+ " expected "+userSpecifiedName + " as sheet " + (i+1)
@@ -119,7 +120,7 @@ public class FIRExcelValidationService {
 
 	private void validateFileForRequiredNumberOfSheets(XSSFWorkbook workbook, int requiredSheets) {
 		if(!(workbook.getNumberOfSheets()==requiredSheets))
-			validation_errors.add(
+			validationErrors.add(
 					new ValidationReport(VALIDATION_TYPE_ERROR, ERR_MSG_FILE_SHEETS_LESS_THAN_REQUIRED)
 			);
 	}
