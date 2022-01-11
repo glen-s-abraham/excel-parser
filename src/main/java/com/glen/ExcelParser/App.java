@@ -26,17 +26,13 @@ public class App
 	
     public static void main( String[] args )
     {
-    	 String path = "testfiles/sampledatainsurance.xlsx";
-    	
-    	
-    	 FileToDbArguements fdargs = new FileToDbArguements.Builder(path)
-    			 .build();
-    	 for(ValidationReport error:excelFirValidation.validate(path))
-    		 System.out.println(error.getType()+" "+error.getMessage());
     	 
-    	 path="testfiles/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
-
-    	 fdargs = new FileToDbArguements.Builder(path)
+    	 String path="testfiles/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
+    	
+//    	 for(ValidationReport error:excelFirValidation.validate(path))
+//    		 System.out.println(error.getType()+" "+error.getMessage());
+    	 System.out.println();
+    	 FileToDbArguements fdargs = new FileToDbArguements.Builder(path)
     			 .addAdditionalDbEntries("ada", "5GUG-1-10")
     			 .build();
 	     excelFirLoader.loadFilesToDB(fdargs);
