@@ -28,16 +28,16 @@ public class SimpleInsertQuery {
 		public SimpleInsertQuery build() {
 			String query = "INSERT INTO";
 			query+=" "+tableName+"(";
-			query+=parseColValuestoStringWithSnakeLowerCase();
+			query+=parseColValuesToString(this.columns);
 			query+=") values (";
-			query+=parseColValuesToString();
+			query+=parseColValuesToString(this.values);
 			query+=")";
 			return new SimpleInsertQuery(query);
 		}
 
-		private String parseColValuesToString() {
+		private String parseColValuesToString(List<String> colValues) {
 			String colStirng="";
-			if(values==null) {
+			if(colValues==null||colValues.size()==0) {
 				for(int i=0;i<columns.size();i++) {
 					colStirng+="?";
 					if(i!=columns.size()-1)
@@ -45,9 +45,9 @@ public class SimpleInsertQuery {
 				}
 			}
 			else {
-				for(int i=0;i<values.size();i++) {
-					colStirng+=values.get(i);
-					if(i!=values.size()-1)
+				for(int i=0;i<colValues.size();i++) {
+					colStirng+=colValues.get(i);
+					if(i!=colValues.size()-1)
 						colStirng+=",";
 				}
 			}		
