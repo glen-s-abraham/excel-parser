@@ -28,24 +28,18 @@ public class App
     {
     	 String path = "testfiles/sampledatainsurance.xlsx";
     	
-    	 path="testfiles/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
+    	
     	 FileToDbArguements fdargs = new FileToDbArguements.Builder(path)
     			 .build();
     	 for(ValidationReport error:excelFirValidation.validate(path))
     		 System.out.println(error.getType()+" "+error.getMessage());
-//    	
-//	     path="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
-//    	 //TODO refactor arguements list to a pojo
-//    	 
+    	 
+    	 path="testfiles/TLS10.1.2_FIR_5GUG-20_N50_1.1.xlsx";
+
     	 fdargs = new FileToDbArguements.Builder(path)
     			 .addAdditionalDbEntries("ada", "5GUG-1-10")
-    			 .addAdditionalDbEntries("lastUpdate", "10-01-2021")
     			 .build();
-//	     excelFirLoader.loadFilesToDB(fdargs);
-//	    	
-//	    String mapInfoPath="C:/Users/Glen/Fulton-Hogan/WorkoutFiles/OneDrive_1_1-4-2022/5GUG-20_IDD_S18_1.1.zip";
-//	    System.out.println(FileUnzipper.unzip(mapInfoPath));
-    	
-//    	FileUnzipper.unzip(mapInfoPath);
+	     excelFirLoader.loadFilesToDB(fdargs);
+
    }
 }
